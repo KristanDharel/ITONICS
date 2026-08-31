@@ -1,6 +1,6 @@
 import {inject, Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
-import {map, Observable, of, tap} from 'rxjs';
+import {catchError, map, Observable, of, tap, throwError} from 'rxjs';
 import {Starship, SWAPIResponse} from '../model/starship.model';
 
 @Injectable({
@@ -24,6 +24,10 @@ export class SwapiService {
       tap((transformed)=>{
         this.cache.set(page,transformed);
       }),
+      catchError((err)=>{
+        console.log(err);
+        return throwError(()=>err)
+      })
     )
   }
 }
