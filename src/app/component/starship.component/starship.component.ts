@@ -1,21 +1,35 @@
-import {AfterViewInit, Component, ElementRef, effect, inject, OnDestroy, OnInit, signal, viewChild} from '@angular/core';
+import {AfterViewInit, Component, computed, effect, ElementRef, inject, OnDestroy, OnInit, signal, viewChild} from '@angular/core';
+import {FormsModule} from '@angular/forms';
 import {Starship} from '../../model/starship.model';
 import {SwapiService} from '../../service/swapi.service';
 import {TableModule} from 'primeng/table';
 
 @Component({
   selector: 'app-starship',
-  imports: [TableModule],
+  imports: [TableModule, FormsModule],
   templateUrl: './starship.component.html',
   styleUrl: './starship.component.css',
 })
 export class StarshipComponent implements OnInit, AfterViewInit, OnDestroy {
   public rows = signal<Starship[]>([]);
   private hasNext = signal(false);
-  private isLoading = signal(false);
+  public isLoading = signal(false);
   private currentPage = signal(1);
-  private errorMessage = signal<string | null>(null);
-  private search = signal('');
+  public errorMessage = signal<string | null>(null);
+  public search = signal('');
+
+  // editable cell state
+  public editingId = signal<number | null>(null);
+  public editValue = signal('');
+
+  // filtered view used by the table
+  public filteredRows = computed(() => {
+    const term = this.search().trim().toLowerCase();
+    if (!term) {
+      return this.rows();
+    }
+    return this.rows().filter(s => s.name.toLowerCase().includes(term));
+  });
 
   private scrollAnchor = viewChild<ElementRef>('scrollAnchor');
 
@@ -24,9 +38,9 @@ export class StarshipComponent implements OnInit, AfterViewInit, OnDestroy {
   private hostRef = inject(ElementRef);
   private swapiService = inject(SwapiService);
 
+  private isCancelling = false;
+
   constructor() {
-    // Re-attach the observer whenever the anchor element changes
-    // (it moves to a new DOM node every time a new "last row" is rendered)
     effect(() => {
       const anchor = this.scrollAnchor();
       if (anchor && this.observer) {
@@ -79,8 +93,8 @@ export class StarshipComponent implements OnInit, AfterViewInit, OnDestroy {
         this.hasNext.set(data.hasNext);
         this.isLoading.set(false);
       },
-      error: (err) => {
-        this.errorMessage.set("Failed to load");
+      error: () => {
+        this.errorMessage.set('Failed to load starships. Please try again.');
         this.isLoading.set(false);
       }
     });
@@ -92,5 +106,37 @@ export class StarshipComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     this.currentPage.update((page) => page + 1);
     this.loadPage();
+  }
+
+  retry(): void {
+    this.loadPage();
+  }
+
+  onSearchChange(value: string): void {
+    this.search.set(value);
+  }
+
+  startEdit(starship: Starship) {
+    this.editingId.set(starship.id);
+    this.editValue.set(starship.name);
+  }
+
+  confirmEdit(id: number): void {
+    if (this.isCancelling) {
+      this.isCancelling = false;
+      return;
+    }
+    const newValue = this.editValue().trim();
+    if (newValue) {
+      this.rows.update((existing) =>
+        existing.map((s) => (s.id === id ? { ...s, name: newValue } : s))
+      );
+    }
+    this.editingId.set(null);
+  }
+
+  cancelEdit(): void {
+    this.isCancelling = true;
+    this.editingId.set(null);
   }
 }

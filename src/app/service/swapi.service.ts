@@ -17,7 +17,10 @@ export class SwapiService {
     }
     return this.http.get<SWAPIResponse>(`${this.baseUrl}?page=${page}`).pipe(
       map((res)=>({
-        results: res.results,
+        results: res.results.map((s) => ({
+          ...s,
+          id: Number(s.url.split('/').filter(Boolean).pop())
+        })),
         hasNext: !!res.next,
         count: res.count
       })),

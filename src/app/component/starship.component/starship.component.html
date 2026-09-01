@@ -1,28 +1,75 @@
-<p-table [value]="rows()" [scrollable]="true" [resizableColumns] ="true" scrollHeight="400px">
-  <ng-template #header>
-    <tr>
-      <th>Name</th>
-      <th>Model</th>
-      <th>Manufacturer</th>
-      <th>Crew</th>
-      <th>Passengers</th>
-      <th>Hyperdrive Rating</th>
-    </tr>
-  </ng-template>
+<div class="toolbar">
+  <h1>Star Wars Fleet</h1>
+  <input
+    type="text"
+    placeholder="Search by name..."
+    [ngModel]="search()"
+    (ngModelChange)="onSearchChange($event)"
+  />
+</div>
 
-  <ng-template #body let-starship let-i="rowIndex">
-    <tr>
-      <td>{{ starship.name }}</td>
-      <td>{{ starship.model }}</td>
-      <td>{{ starship.manufacturer }}</td>
-      <td>{{ starship.crew }}</td>
-      <td>{{ starship.passengers }}</td>
-      <td>
-        {{ starship.hyperdrive_rating }}
-        @if (i === rows().length - 1) {
-          <span #scrollAnchor style="display:inline-block;width:1px;height:1px;"></span>
-        }
-      </td>
-    </tr>
-  </ng-template>
-</p-table>
+@if (errorMessage()) {
+  <div class="error-banner">
+    <span>{{ errorMessage() }}</span>
+    <button (click)="retry()">Retry</button>
+  </div>
+} @else {
+  @if (isLoading() && rows().length === 0) {
+    <div class="initial-loading">Loading starships...</div>
+  } @else {
+    <p-table
+      [value]="filteredRows()"
+      [scrollable]="true"
+      scrollHeight="400px"
+      [resizableColumns]="true"
+      columnResizeMode="expand"
+    >
+      <ng-template #header>
+        <tr>
+          <th pResizableColumn>Name</th>
+          <th pResizableColumn>Model</th>
+          <th pResizableColumn>Manufacturer</th>
+          <th pResizableColumn>Crew</th>
+          <th pResizableColumn>Passengers</th>
+          <th pResizableColumn>Hyperdrive Rating</th>
+        </tr>
+      </ng-template>
+
+      <ng-template #body let-starship let-i="rowIndex">
+        <tr>
+          <td>
+            @if (editingId() === starship.id) {
+              <input
+                type="text"
+                [ngModel]="editValue()"
+                (ngModelChange)="editValue.set($event)"
+                (blur)="confirmEdit(starship.id)"
+                (keydown.enter)="confirmEdit(starship.id)"
+                (keydown.escape)="cancelEdit()"
+                autofocus
+              />
+            } @else {
+              <span (dblclick)="startEdit(starship)">{{ starship.name }}</span>
+            }
+          </td>
+          <td>{{ starship.model }}</td>
+          <td>{{ starship.manufacturer }}</td>
+          <td>{{ starship.crew }}</td>
+          <td>{{ starship.passengers }}</td>
+          <td>
+            {{ starship.hyperdrive_rating }}
+            @if (i === filteredRows().length - 1) {
+              <span #scrollAnchor style="display:inline-block;width:1px;height:1px;"></span>
+            }
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template #emptymessage>
+        <tr>
+          <td colspan="6">No starships match your search.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  }
+}
