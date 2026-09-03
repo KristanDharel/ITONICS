@@ -8,11 +8,11 @@ import {TableModule} from 'primeng/table';
   selector: 'app-starship',
   imports: [TableModule, FormsModule],
   templateUrl: './starship.component.html',
-  styleUrl: './starship.component.css',
+  styleUrl: './starship.component.scss',
 })
 export class StarshipComponent implements OnInit, AfterViewInit, OnDestroy {
   public rows = signal<Starship[]>([]);
-  private hasNext = signal(false);
+  public hasNext = signal(false);
   public isLoading = signal(false);
   private currentPage = signal(1);
   public errorMessage = signal<string | null>(null);

@@ -1,0 +1,37 @@
+::ng-deep .fleet-table {
+  .p-datatable-table,
+  table {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  // Vertical lines between columns
+  th, td {
+    border-right: 1px solid #e2e8f0 !important;
+  }
+
+  th:last-child,
+  td:last-child {
+    border-right: none !important;
+  }
+
+  // Column resize handle
+  .p-datatable-column-resizer,
+  .p-column-resizer {
+    width: 4px;
+    background: transparent;
+    opacity: 1;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      width: 4px;
+      height: 16px;
+      background: #405DFF;
+      border-radius: 8px;
+      transform: translateY(-50%);
+    }
+  }
+}
